@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Qualification Compliance Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed #007bff;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: #0056b3;
+            background: #e9ecef;
+        }
+        
+        .upload-section h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-input-label {
+            background: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-weight: 500;
+        }
+        
+        .file-input-label:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: #fff3cd;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .loading h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .compliance-report {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .report-content {
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            padding: 30px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+        
+        .status-compliant {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-breach {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-not-applicable {
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+        
+        .risk-low { color: #28a745; font-weight: 600; }
+        .risk-medium { color: #ffc107; font-weight: 600; }
+        .risk-high { color: #dc3545; font-weight: 600; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .info-card h4 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-card p {
+            color: #212529;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        
+        .findings-section, .recommendations-section {
+            margin: 25px 0;
+        }
+        
+        .findings-section h3, .recommendations-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .findings-list, .recommendations-list {
+            list-style: none;
+        }
+        
+        .findings-list li, .recommendations-list li {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .qualifications-section {
+            margin: 25px 0;
+        }
+        
+        .qualification-item {
+            background: #e7f3ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .files-uploaded {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .file-icon {
+            width: 30px;
+            height: 30px;
+            background: #007bff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 15px;
+            font-weight: 600;
+        }
+        
+        .detailed-assessment {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .detailed-assessment h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        
+        .assessment-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .assessment-item strong {
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Qualification Compliance Checker</h1>
+            <p>Upload documents and get instant compliance assessment reports</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="upload-section">
+                <h3>📁 Upload Compliance Documents</h3>
+                <p>Upload CoS document, CV, qualification certificates, and application forms</p>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.docx,.doc">
+                    <label for="fileInput" class="file-input-label">
+                        📎 Choose Documents
+                    </label>
+                </div>
+                
+                <div id="selectedFiles"></div>
+                
+                <button class="upload-btn" onclick="uploadDocuments()" id="uploadBtn">
+                    🚀 Analyze Compliance
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <h3>🔄 AI Processing Documents...</h3>
+                <p>Extracting text, analyzing qualifications, and generating compliance report...</p>
+            </div>
+            
+            <div class="compliance-report" id="complianceReport">
+                <!-- Report content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const selectedFilesDiv = document.getElementById('selectedFiles');
+            
+            if (files.length > 0) {
+                let fileList = '<div style="margin: 15px 0;"><strong>Selected Files:</strong><ul style="text-align: left; display: inline-block; margin: 10px 0;">';
+                for (let i = 0; i < files.length; i++) {
+                    fileList += `<li>📄 ${files[i].name}</li>`;
+                }
+                fileList += '</ul></div>';
+                selectedFilesDiv.innerHTML = fileList;
+            } else {
+                selectedFilesDiv.innerHTML = '';
+            }
+        });
+
+        function uploadDocuments() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('Please select at least one document to upload.');
+                return;
+            }
+            
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('complianceReport').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+            
+            fetch('/api/ai-compliance/upload-documents', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+                displayComplianceReport(data);
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+                alert('Error: ' + error.message);
+            });
+        }
+        
+        function displayComplianceReport(data) {
+            const reportDiv = document.getElementById('complianceReport');
+            
+            if (!data.success) {
+                reportDiv.innerHTML = `
+                    <div class="report-header">
+                        <h2>❌ Processing Error</h2>
+                    </div>
+                    <div class="report-content">
+                        <p style="color: #dc3545; font-weight: 600;">${data.error}</p>
+                    </div>
+                `;
+                reportDiv.style.display = 'block';
+                return;
+            }
+            
+            const report = data.data.compliance_report;
+            const analysis = data.data.analysis_result;
+            const files = data.data.uploaded_files;
+            
+            const statusClass = report.compliance_status === 'COMPLIANT' ? 'status-compliant' : 
+                               report.compliance_status === 'BREACH' || report.compliance_status === 'SERIOUS_BREACH' ? 'status-breach' : 
+                               'status-not-applicable';
+            
+            const riskClass = report.risk_level === 'LOW' ? 'risk-low' : 
+                             report.risk_level === 'MEDIUM' ? 'risk-medium' : 'risk-high';
+            
+            reportDiv.innerHTML = `
+                <div class="report-header">
+                    <h2>📋 Qualification Compliance Assessment Report</h2>
+                    <p>Report ID: ${report.report_id}</p>
+                    <p>Generated: ${new Date(report.generated_at).toLocaleString()}</p>
+                </div>
+                
+                <div class="report-content">
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>Compliance Status</h4>
+                            <span class="status-badge ${statusClass}">${report.compliance_status}</span>
+                        </div>
+                        <div class="info-card">
+                            <h4>Risk Level</h4>
+                            <p class="${riskClass}">${report.risk_level}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>Evidence Status</h4>
+                            <p>${report.evidence_status.replace(/_/g, ' ')}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>Breach Type</h4>
+                            <p>${report.breach_type || 'None'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>CoS Reference</h4>
+                            <p>${report.worker_information.cos_reference}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>Job Title</h4>
+                            <p>${report.worker_information.job_title}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>SOC Code</h4>
+                            <p>${report.worker_information.soc_code}</p>
+                        </div>
+                        <div class="info-card">
+                            <h4>Assignment Date</h4>
+                            <p>${report.worker_information.assignment_date}</p>
+                        </div>
+                    </div>
+                    
+                    ${report.qualifications_found.length > 0 ? `
+                    <div class="qualifications-section">
+                        <h3>🎓 Qualifications Found</h3>
+                        ${report.qualifications_found.map(qual => `
+                            <div class="qualification-item">
+                                <strong>${qual.qualification}</strong><br>
+                                <small>Found in: ${qual.found_in.replace(/_/g, ' ')}</small><br>
+                                <small>Dates: ${qual.dates.join(', ')}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
+                    ${report.assessment_findings.length > 0 ? `
+                    <div class="findings-section">
+                        <h3>🔍 Assessment Findings</h3>
+                        <ul class="findings-list">
+                            ${report.assessment_findings.map(finding => `<li>${finding}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${report.recommendations.length > 0 ? `
+                    <div class="recommendations-section">
+                        <h3>💡 Recommendations</h3>
+                        <ul class="recommendations-list">
+                            ${report.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${report.detailed_assessment ? `
+                    <div class="detailed-assessment">
+                        <h4>📊 Detailed Assessment</h4>
+                        <div class="assessment-item">
+                            <strong>Outcome:</strong> ${report.detailed_assessment.outcome}
+                        </div>
+                        <div class="assessment-item">
+                            <strong>Home Office View:</strong> ${report.detailed_assessment.home_office_view}
+                        </div>
+                        <div class="assessment-item">
+                            <strong>Assessment Finding:</strong> ${report.detailed_assessment.assessment_finding}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="files-uploaded">
+                        <h3>📁 Processed Documents</h3>
+                        ${files.map(file => `
+                            <div class="file-item">
+                                <div class="file-icon">📄</div>
+                                <div>
+                                    <strong>${file.filename}</strong><br>
+                                    <small>Type: ${file.document_type.replace(/_/g, ' ')} | Uploaded: ${new Date(file.upload_time).toLocaleString()}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            reportDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
